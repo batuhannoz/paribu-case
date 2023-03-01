@@ -7,11 +7,12 @@ import (
 
 type WeatherStore struct {
 	connection *gorm.DB
-	DBChan chan *model.Weather 
+	DBChan     chan *model.Weather
 }
 
-func (w *WeatherStore) NewWeatherStore(connection *gorm.DB) *WeatherStore {
+func NewWeatherStore(connection *gorm.DB) *WeatherStore {
 	return &WeatherStore{
 		connection: connection,
+		DBChan:     make(chan *model.Weather, 100),
 	}
 }

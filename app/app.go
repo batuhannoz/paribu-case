@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/batuhannoz/paribu-case/app/handler"
-	"github.com/batuhannoz/paribu-case/app/store/model"
+	"github.com/batuhannoz/paribu-case/app/service"
+	"github.com/batuhannoz/paribu-case/app/store"
 	"github.com/batuhannoz/paribu-case/config"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -18,16 +18,22 @@ type App struct {
 
 func (a *App) Initialize(config *config.Config) {
 	var err error
-	a.db, err = gorm.Open(sqlite.Open("./database/weather.db"), &gorm.Config{})
+	a.db, err = store.NewSQLite()
 	if err != nil {
 		fmt.Println(err)
 	}
-	a.db.AutoMigrate(&model.Weather{})
+
+	weatherStore := store.NewWeatherStore(a.db)
+
+	singleflight := service.NewSingleflight(weatherStore)
+
+	Apphandler := handler.NewHandler(singleflight)
+
 	a.fiber = fiber.New()
-	a.registerRoutes()
+	a.registerRoutes(Apphandler)
 }
 
-func (a *App) registerRoutes() {
+func (a *App) registerRoutes(handler *handler.Handler) {
 	a.fiber.Get("/weather", handler.Weather)
 }
 
