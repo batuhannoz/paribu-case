@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/batuhannoz/paribu-case/app/handler"
+	"github.com/batuhannoz/paribu-case/app/store/model"
 	"github.com/batuhannoz/paribu-case/config"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/sqlite"
@@ -16,11 +17,12 @@ type App struct {
 }
 
 func (a *App) Initialize(config *config.Config) {
-	db, err := gorm.Open(sqlite.Open("./database/weather.db"), &gorm.Config{})
+	var err error
+	a.db, err = gorm.Open(sqlite.Open("./database/weather.db"), &gorm.Config{})
 	if err != nil {
 		fmt.Println(err)
 	}
-	a.db = db
+	a.db.AutoMigrate(&model.Weather{})
 	a.fiber = fiber.New()
 	a.registerRoutes()
 }
