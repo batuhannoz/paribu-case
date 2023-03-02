@@ -6,6 +6,7 @@ import (
 
 	"github.com/batuhannoz/paribu-case/app/handler"
 	"github.com/batuhannoz/paribu-case/app/store/model"
+	"github.com/batuhannoz/paribu-case/app/weather"
 )
 
 type WeatherStore interface {
@@ -13,7 +14,8 @@ type WeatherStore interface {
 }
 
 type Group struct {
-	response     *model.Weather
+	wg           sync.WaitGroup
+	response     *handler.WeatherResponse
 	wait         chan struct{}
 	groupFull    chan struct{}
 	subsicribers int32
@@ -44,21 +46,50 @@ func NewSingleflight(weatherStore WeatherStore) *Singleflight {
 func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherResponse {
 	s.mtx.Lock()
 	group, ok := s.m[location]
+	s.mtx.Unlock()
 	if !ok {
+		s.mtx.Lock()
 		group = &Group{
 			wait:         make(chan struct{}),
 			groupFull:    make(chan struct{}),
 			subsicribers: 0,
 		}
+		s.mtx.Unlock()
 		go func() {
+
 			select {
 			case <-time.After(time.Second * 5):
 			case <-group.groupFull:
 			}
-			//
+			group.response = &handler.WeatherResponse{
+				Location:  location,
+				Tempature: (weather.Api1(location) + weather.Api2(location)) / 2,
+			}
+			s.dbChan <- &model.Weather{
+				Id:         0,
+				Location:   group.response.Location,
+				Tempature:  group.response.Tempature,
+				CreateDate: time.Now(),
+			}
+			group.wait <- struct{}{}
+			
+			group.wg.Add(int(group.subsicribers))
+			group.wg.Wait()
+			s.mtx.Lock()
+			delete(s.m, location)
 		}()
+	}
+
+	s.mtx.Lock()
+	if group.subsicribers >= 9 {
+		close(group.groupFull)
 	}
 	group.subsicribers++
 	s.mtx.Unlock()
-	return &handler.WeatherResponse{}
+
+	<-group.wait
+	res := *group.response
+	group.wg.Done()
+	
+	return &res
 }
