@@ -7,7 +7,7 @@ import (
 )
 
 func NewSQLite() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("./weather.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("./weather.sqlite"), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

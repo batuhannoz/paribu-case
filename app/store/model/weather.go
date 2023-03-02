@@ -1,14 +1,18 @@
 package model
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 func (Weather) TableName() string {
 	return "weather"
 }
 
 type Weather struct {
-	Id         uint64    `gorm:"primary_key:auto_increment" json:"id"`
-	Location   string    `gorm:"type:varchar(50)" json:"city"`
-	Tempature  float32   `gorm:"type:float32" json:"tempature"`
-	CreateDate time.Time `gorm:"type:datetime" json:"create_date"`
+	gorm.Model
+	ID          int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	Location    string    `gorm:"column:location" json:"location"`
+	Temperature float32   `gorm:"column:temperature" json:"temperature"`
+	CreateDate  time.Time `gorm:"column:create_date" json:"create_date"`
 }

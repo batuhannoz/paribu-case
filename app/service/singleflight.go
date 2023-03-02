@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -15,7 +14,6 @@ type WeatherStore interface {
 }
 
 type Group struct {
-	wg          sync.WaitGroup
 	response    *handler.WeatherResponse
 	wait        chan struct{}
 	groupFull   chan struct{}
@@ -61,19 +59,16 @@ func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherRespon
 			case <-group.groupFull:
 			}
 			group.response = &handler.WeatherResponse{
-				Location:  location,
-				Tempature: (weather.Api1(location) + weather.Api2(location)) / 2,
+				Location:    location,
+				Temperature: (weather.Api1(location) + weather.Api2(location)) / 2,
 			}
 			s.dbChan <- &model.Weather{
-				Id:         0,
-				Location:   group.response.Location,
-				Tempature:  group.response.Tempature,
-				CreateDate: time.Now(),
+				ID:          0,
+				Location:    group.response.Location,
+				Temperature: group.response.Temperature,
+				CreateDate:  time.Now(),
 			}
-			fmt.Println(group.subscribers)
-			group.wg.Add(int(group.subscribers))
 			close(group.wait)
-			group.wg.Wait()
 
 		}()
 	}
@@ -87,6 +82,5 @@ func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherRespon
 	<-group.wait
 
 	res := *group.response
-	group.wg.Done()
 	return &res
 }

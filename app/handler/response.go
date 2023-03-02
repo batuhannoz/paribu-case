@@ -1,6 +1,6 @@
 package handler
 
 type WeatherResponse struct {
-	Location string `json:"location"`
-	Tempature float32 `json:"Tempature"`
+	Location    string  `json:"location"`
+	Temperature float32 `json:"Temperature"`
 }
