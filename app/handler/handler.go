@@ -25,6 +25,6 @@ func (app *Handler) Weather(ctx *fiber.Ctx) error {
 	if location == "" {
 		return ctx.SendStatus(http.StatusBadRequest)
 	}
-	app.singleflight.WeatherByLocation(location)
-	return ctx.SendStatus(http.StatusOK)
+	res := app.singleflight.WeatherByLocation(location)
+	return ctx.Status(http.StatusOK).JSON(res)
 }
