@@ -11,11 +11,10 @@ type WeatherStore struct {
 
 func NewWeatherStore(connection *gorm.DB) *WeatherStore {
 	return &WeatherStore{
-		connection: connection,		
+		connection: connection,
 	}
 }
 
 func (w *WeatherStore) SaveWeather(weather *model.Weather) {
 	w.connection.Save(&weather)
-}   
-
+}

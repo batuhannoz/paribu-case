@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -14,11 +15,11 @@ type WeatherStore interface {
 }
 
 type Group struct {
-	wg           sync.WaitGroup
-	response     *handler.WeatherResponse
-	wait         chan struct{}
-	groupFull    chan struct{}
-	subsicribers int32
+	wg          sync.WaitGroup
+	response    *handler.WeatherResponse
+	wait        chan struct{}
+	groupFull   chan struct{}
+	subscribers int32
 }
 
 type Singleflight struct {
@@ -31,8 +32,8 @@ type Singleflight struct {
 func NewSingleflight(weatherStore WeatherStore) *Singleflight {
 	singleflight := &Singleflight{
 		weatherStore: weatherStore,
-		m:            make(map[string]*Group),
-		dbChan:       make(chan *model.Weather, 50),
+		m:            make(map[string]*Group, 100),
+		dbChan:       make(chan *model.Weather, 1),
 	}
 	go func() {
 		for {
@@ -46,17 +47,15 @@ func NewSingleflight(weatherStore WeatherStore) *Singleflight {
 func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherResponse {
 	s.mtx.Lock()
 	group, ok := s.m[location]
-	s.mtx.Unlock()
 	if !ok {
-		s.mtx.Lock()
 		group = &Group{
-			wait:         make(chan struct{}),
-			groupFull:    make(chan struct{}),
-			subsicribers: 0,
+			wait:        make(chan struct{}),
+			groupFull:   make(chan struct{}),
+			subscribers: 0,
 		}
-		s.mtx.Unlock()
-		go func() {
+		s.m[location] = group
 
+		go func() {
 			select {
 			case <-time.After(time.Second * 5):
 			case <-group.groupFull:
@@ -71,25 +70,23 @@ func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherRespon
 				Tempature:  group.response.Tempature,
 				CreateDate: time.Now(),
 			}
-			group.wait <- struct{}{}
-			
-			group.wg.Add(int(group.subsicribers))
+			fmt.Println(group.subscribers)
+			group.wg.Add(int(group.subscribers))
+			close(group.wait)
 			group.wg.Wait()
-			s.mtx.Lock()
-			delete(s.m, location)
+
 		}()
 	}
-
-	s.mtx.Lock()
-	if group.subsicribers >= 9 {
-		close(group.groupFull)
+	group.subscribers++
+	if group.subscribers >= 10 {
+		delete(s.m, location)
+		group.groupFull <- struct{}{}
 	}
-	group.subsicribers++
 	s.mtx.Unlock()
 
 	<-group.wait
+
 	res := *group.response
 	group.wg.Done()
-	
 	return &res
 }
