@@ -69,7 +69,6 @@ func (s *Singleflight) WeatherByLocation(location string) *handler.WeatherRespon
 				CreateDate:  time.Now(),
 			}
 			close(group.wait)
-
 		}()
 	}
 	group.subscribers++
