@@ -1,31 +1,72 @@
-# paribu-case
+# Weather API Service
 
-![](./views/weather_diagram.png)
+A high-performance weather information service built with Go, featuring request deduplication using singleflight pattern and SQLite caching.
 
-## Structure
+## Features
+
+- **Request Deduplication**: Implements the singleflight pattern to prevent duplicate API calls for the same weather data
+- **Caching System**: Uses SQLite database to cache weather information
+- **Fast Response Times**: Built with the high-performance Fiber web framework
+- **Clean Architecture**: Follows clean architecture principles with clear separation of concerns
+
+## Tech Stack
+
+- **Go**: Primary programming language
+- **Fiber**: Web framework for handling HTTP requests
+- **GORM**: ORM library for database operations
+- **SQLite**: Database for caching weather data
+- **Singleflight**: For request deduplication
+
+## Project Structure
+
 ```
 .
-├── app
-│   ├── app.go
-│   ├── handler
-│   │   ├── handler.go
-│   │   └── response.go
-│   ├── service
-│   │   └── singleflight.go
-│   ├── store
-│   │   ├── model
-│   │   │   └── weather.go
-│   │   ├── sqlite.go
-│   │   └── weather.go
-│   └── weather
-│       └── weather.go
-└── config
-    └── config.go
+├── app/
+│   ├── handler/     # HTTP request handlers
+│   ├── service/     # Business logic layer
+│   ├── store/       # Data access layer
+│   └── weather/     # Weather-related components
+├── config/          # Configuration management
+├── views/           # Template files
+├── main.go         # Application entry point
+├── go.mod          # Go module file
+└── go.sum          # Go module checksums
 ```
 
-## API
-#### /weather
-* `GET` : /weather?q=\<location\>
+## Prerequisites
+
+- Go 1.16 or higher
+- SQLite
+
+## Setup and Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/batuhannoz/paribu-case.git
+   cd paribu-case
+   ```
+
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
+
+3. Run the application:
+   ```bash
+   go run main.go
+   ```
+
+The server will start on port 3000 by default.
+
+## API Endpoints
+
+### Get Weather Information
+```
+GET /weather?q=<location>
+```
+
+Returns weather information for the specified parameters.
+
 #### Response:
 ```json
 {
@@ -34,10 +75,10 @@
 }
 ```
 
-## Run
-```bash
-go run main.go 
-#visit 0.0.0.0:3000/weather?q=Istanbul on browser
-```
+## Architecture
 
-"weather_api_1" and "weather_api_2" not working. Instead, it generates fake data.
+The project follows a clean architecture pattern with the following layers:
+
+- **Handlers**: Handle HTTP requests and responses
+- **Services**: Contain business logic and implement singleflight pattern
+- **Store**: Manages data persistence and caching using SQLite
