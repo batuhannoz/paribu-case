@@ -4,6 +4,8 @@ A high-performance weather information service built with Go, featuring request 
 
 ## Features
 
+![](./views/weather_diagram.png)
+
 - **Request Deduplication**: Implements the singleflight pattern to prevent duplicate API calls for the same weather data
 - **Caching System**: Uses SQLite database to cache weather information
 - **Fast Response Times**: Built with the high-performance Fiber web framework
